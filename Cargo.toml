@@ -5,3 +5,5 @@ authors = ["asui <k.sickeler@gmail.com>"]
 
 [dependencies]
 clap = "*"
+rustbreak = { git = "https://github.com/asuivelentine/filehash", branch =
+"master" }

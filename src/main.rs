@@ -40,7 +40,9 @@ fn main() {
     hash_files(path);
 }
 
-fn hash_files(dir: &Path) -> Result<()> {
+fn hash_files(dir: &Path) -> Result<HashMap<Vec<u8>, OsString>> {
+    let mut files = HashMap::new();
+
     for entry in dir.read_dir()? {
         let entry = entry?;
         let path = entry.path();
@@ -55,5 +57,5 @@ fn hash_files(dir: &Path) -> Result<()> {
             println!("{:?}", hash);
         }
     }
-    Ok(())
+    Ok(files)
 }

@@ -49,13 +49,13 @@ fn hash_files(dir: &Path) -> Result<HashMap<Vec<u8>, OsString>> {
 
         if path.is_dir() {
             hash_files(&path)?;
-        } else {
-            let hash = Filehash::new(path.into_os_string())
-                .hash()?;
+            continue;
+        } 
 
-            println!("{:?}", entry.path());
-            println!("{:?}", hash);
-        }
+        let path = path.into_os_string();
+        let hash = Filehash::new(path.clone())
+            .hash()?;
+        files.insert(hash, path.clone());
     }
     Ok(files)
 }

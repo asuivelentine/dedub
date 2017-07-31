@@ -4,10 +4,15 @@ extern crate filehash;
 
 use std::path::Path;
 use std::process::exit;
-use std::io;
 
 use clap::{Arg, App};
 use filehash::filehash::Filehash;
+
+pub mod error;
+
+use error::DedupError;
+
+pub type Result<T> = ::std::result::Result<T, DedupError>;
 
 fn main() {
     let matches = App::new("Dedup")
@@ -35,7 +40,7 @@ fn main() {
     hash_files(path);
 }
 
-fn hash_files(dir: &Path) -> io::Result<()> {
+fn hash_files(dir: &Path) -> Result<()> {
     for entry in dir.read_dir()? {
         let entry = entry?;
         let path = entry.path();
@@ -44,8 +49,7 @@ fn hash_files(dir: &Path) -> io::Result<()> {
             hash_files(&path)?;
         } else {
             let hash = Filehash::new(path.into_os_string())
-                .hash()
-                .unwrap();
+                .hash()?;
 
             println!("{:?}", entry.path());
             println!("{:?}", hash);

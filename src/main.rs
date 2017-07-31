@@ -30,4 +30,25 @@ fn main() {
         println!("Argument is not a valid path to a directory");
         exit(1);
     }
+
+    hash_files(path);
+}
+
+fn hash_files(dir: &Path) -> io::Result<()> {
+    for entry in dir.read_dir()? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_dir() {
+            hash_files(&path)?;
+        } else {
+            let hash = Filehash::new(path.into_os_string())
+                .hash()
+                .unwrap();
+
+            println!("{:?}", entry.path());
+            println!("{:?}", hash);
+        }
+    }
+    Ok(())
 }

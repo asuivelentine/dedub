@@ -40,6 +40,13 @@ fn main() {
     hash_files(path);
 }
 
+fn yell<S: Debug>(first: Option<S>, second: &S) {
+    match first {
+        Some(f) => println!("{:?} {:?}", f, second),
+        _ => (),
+    };
+}
+
 fn hash_files(dir: &Path) -> Result<HashMap<Vec<u8>, OsString>> {
     let mut files = HashMap::new();
 
@@ -55,7 +62,8 @@ fn hash_files(dir: &Path) -> Result<HashMap<Vec<u8>, OsString>> {
         let path = path.into_os_string();
         let hash = Filehash::new(path.clone())
             .hash()?;
-        files.insert(hash, path.clone());
+        let res = files.insert(hash, path.clone());
+        yell(res, &path);
     }
     Ok(files)
 }

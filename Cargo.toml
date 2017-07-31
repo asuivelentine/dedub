@@ -6,3 +6,4 @@ authors = ["asui <k.sickeler@gmail.com>"]
 [dependencies]
 clap = "*"
 filehash = { git = "https://github.com/asuivelentine/filehash", branch = "master" }
+quick-error = "*"

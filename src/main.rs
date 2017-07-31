@@ -1,5 +1,6 @@
 extern crate clap;
 extern crate filehash;
+#[macro_use] extern crate quick_error;
 
 use std::path::Path;
 use std::process::exit;

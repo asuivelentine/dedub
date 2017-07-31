@@ -40,7 +40,13 @@ fn main() {
         exit(1);
     }
 
-    hash_files(path);
+    match hash_files(path) {
+        Ok(_) => exit(0),
+        Err(e) => {
+            println!("{:?}", e);
+            exit(1);
+        }
+    };
 }
 
 fn yell<S: Debug>(first: Option<S>, second: &S) {

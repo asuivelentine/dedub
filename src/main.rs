@@ -7,7 +7,6 @@ use std::process::exit;
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::fmt::Debug;
-use std::hash::Hash;
 
 use clap::{Arg, App};
 use filehash::filehash::Filehash;
@@ -52,15 +51,19 @@ fn yell<S: Debug>(first: Option<S>, second: &S) {
 }
 
 fn hash_files(dir: &Path) -> Result<HashMap<Vec<u8>, OsString>> {
-    let mut files = HashMap::new();
+    let files = HashMap::new();
+    hash_files_rec(dir, files)
+}
+
+fn hash_files_rec(dir: &Path, mut files: HashMap<Vec<u8>, OsString>)
+    -> Result<HashMap<Vec<u8>, OsString>> {
 
     for entry in dir.read_dir()? {
         let entry = entry?;
         let path = entry.path();
 
         if path.is_dir() {
-            let map = hash_files(&path)?;
-            files = merge(&files, &map);
+            files = hash_files_rec(&path, files)?;
             continue;
         } 
 
@@ -70,18 +73,5 @@ fn hash_files(dir: &Path) -> Result<HashMap<Vec<u8>, OsString>> {
         let res = files.insert(hash, path.clone());
         yell(res, &path);
     }
-
     Ok(files)
-}
-
-fn merge<K: Hash + Eq + Clone, V: Clone+ Debug>(first_context: &HashMap<K, V>, second_context: &HashMap<K, V>) -> HashMap<K, V> {
-    let mut new_context = HashMap::new();
-    for (key, value) in first_context.iter() {
-        new_context.insert(key.clone(), value.clone());
-    }
-    for (key, value) in second_context.iter() {
-        let res = new_context.insert(key.clone(), value.clone());
-        yell(res, value);
-    }
-    new_context
 }

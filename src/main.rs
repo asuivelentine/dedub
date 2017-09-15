@@ -29,11 +29,20 @@ fn main() {
              .help("Search for dupliates within the given path")
              .required(true)
              .takes_value(true))
+        .arg(Arg::with_name("ignoreempty")
+             .short("i")
+             .value_name("ignoreempty")
+             .help("Ignore empty files since it would have the same hash")
+             .takes_value(false))
         .get_matches();
 
     //safe unwrap since cargo will require this argument
     let path = matches.value_of("path").unwrap();
     let path = Path::new(path);
+
+    if matches.is_present("ignoreempty") {
+        println!("search ignoring empty files");
+    }
 
     if !path.is_dir() {
         println!("Argument is not a valid path to a directory");
@@ -72,6 +81,12 @@ fn hash_files_rec(dir: &Path, mut files: HashMap<Vec<u8>, OsString>)
             files = hash_files_rec(&path, files)?;
             continue;
         } 
+
+        let len = try!(path.metadata())
+            .len();
+        if len == 0 {
+            continue;
+        }
 
         let path = path.into_os_string();
         let hash = Filehash::new(path.clone())

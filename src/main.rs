@@ -66,19 +66,20 @@ fn yell<S: Debug>(first: Option<S>, second: &S) {
 }
 
 fn hash_files(dir: &Path) -> Result<HashMap<Vec<u8>, OsString>> {
-    let files = HashMap::new();
-    hash_files_rec(dir, files)
+    let mut files = HashMap::new();
+    let _ = hash_files_rec(dir, &mut files)?;
+    Ok(files)
 }
 
-fn hash_files_rec(dir: &Path, mut files: HashMap<Vec<u8>, OsString>)
-    -> Result<HashMap<Vec<u8>, OsString>> {
+fn hash_files_rec<'a>(dir: &Path, files: &mut HashMap<Vec<u8>, OsString>)
+    -> Result<()> {
 
     for entry in dir.read_dir()? {
         let entry = entry?;
         let path = entry.path();
 
         if path.is_dir() {
-            files = hash_files_rec(&path, files)?;
+            hash_files_rec(&path, files)?;
             continue;
         } 
 
@@ -94,5 +95,5 @@ fn hash_files_rec(dir: &Path, mut files: HashMap<Vec<u8>, OsString>)
         let res = files.insert(hash, path.clone());
         yell(res, &path);
     }
-    Ok(files)
+    Ok(())
 }

@@ -11,8 +11,10 @@ use std::fmt::Debug;
 use clap::{Arg, App};
 use filehash::filehash::Filehash;
 
+pub mod config;
 pub mod error;
 
+use config::Config;
 use error::DedupError;
 
 pub type Result<T> = ::std::result::Result<T, DedupError>;
@@ -30,9 +32,14 @@ fn main() {
              .required(true)
              .takes_value(true))
         .arg(Arg::with_name("ignoreempty")
-             .short("i")
+             .short("e")
              .value_name("ignoreempty")
              .help("Ignore empty files since it would have the same hash")
+             .takes_value(false))
+        .arg(Arg::with_name("ignorelinks")
+             .short("l")
+             .value_name("ignorelinks")
+             .help("Ignore links since it would have the same hash")
              .takes_value(false))
         .get_matches();
 
@@ -42,6 +49,10 @@ fn main() {
 
     if matches.is_present("ignoreempty") {
         println!("search ignoring empty files");
+    }
+
+    if matches.is_present("ignorelinks") {
+        println!("search ignoring links");
     }
 
     if !path.is_dir() {

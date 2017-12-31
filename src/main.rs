@@ -7,6 +7,7 @@ use std::process::exit;
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::fmt::Debug;
+use std::fs;
 
 use clap::{Arg, App};
 use filehash::filehash::Filehash;
@@ -45,22 +46,22 @@ fn main() {
 
     //safe unwrap since cargo will require this argument
     let path = matches.value_of("path").unwrap();
-    let path = Path::new(path);
+    let mut cfg = Config::new(path);
 
     if matches.is_present("ignoreempty") {
-        println!("search ignoring empty files");
+        cfg = cfg.with_ignore_empty();
     }
 
     if matches.is_present("ignorelinks") {
-        println!("search ignoring links");
+        cfg = cfg.with_ignore_link();
     }
 
-    if !path.is_dir() {
+    if !cfg.dir().is_dir() {
         println!("Argument is not a valid path to a directory");
         exit(1);
     }
 
-    match hash_files(path) {
+    match hash_files(cfg) {
         Ok(_) => exit(0),
         Err(e) => {
             println!("{:?}", e);
@@ -76,29 +77,49 @@ fn yell<S: Debug>(first: Option<S>, second: &S) {
     };
 }
 
-fn hash_files(dir: &Path) -> Result<HashMap<Vec<u8>, OsString>> {
+fn check_current_file(cfg: &Config, path: &Path) -> Result<Option<()>> {
+    let ignore_empty = cfg.ignore_emptys();
+    let ignore_link = cfg.ignore_links();
+    let metadata = fs::symlink_metadata(path)?;
+
+    if ignore_link && metadata.file_type().is_symlink() {
+        return Ok(None);
+    }
+
+    if ignore_empty && (metadata.len() == 0) {
+        return Ok(None);
+    }
+
+    Ok(Some(()))
+}
+
+
+fn hash_files(cfg: Config) -> Result<HashMap<Vec<u8>, OsString>> {
     let mut files = HashMap::new();
-    let _ = hash_files_rec(dir, &mut files)?;
+    let _ = hash_files_rec(&cfg, &mut files)?;
     Ok(files)
 }
 
-fn hash_files_rec<'a>(dir: &Path, files: &mut HashMap<Vec<u8>, OsString>)
+fn hash_files_rec<'a>(cfg: &Config, files: &mut HashMap<Vec<u8>, OsString>)
     -> Result<()> {
+    let dir = cfg.dir();
 
     for entry in dir.read_dir()? {
         let entry = entry?;
         let path = entry.path();
 
-        if path.is_dir() {
-            hash_files_rec(&path, files)?;
+        if check_current_file(cfg, &path)?.is_none() {
             continue;
         } 
 
-        let len = try!(path.metadata())
-            .len();
-        if len == 0 {
+        if path.is_dir() {
+            let cfg = try!(path.to_str()
+                .ok_or(DedupError::DirError)
+                .map(|s| cfg.clone().update_path(s)));
+
+            hash_files_rec(&cfg, files)?;
             continue;
-        }
+        } 
 
         let path = path.into_os_string();
         let hash = Filehash::new(path.clone())
@@ -108,3 +129,4 @@ fn hash_files_rec<'a>(dir: &Path, files: &mut HashMap<Vec<u8>, OsString>)
     }
     Ok(())
 }
+

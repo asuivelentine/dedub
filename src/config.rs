@@ -1,6 +1,7 @@
 use std::ffi::OsString;
 use std::path::Path;
 
+#[derive(Debug, Clone)]
 pub struct Config {
     path: OsString,
     ignore_empty: bool,
@@ -22,6 +23,17 @@ impl Config  {
             .with_ignore_empty()
     }
 
+    pub fn update_path<S: Into<String>>(self, path: S) -> Config {
+        let mut cfg = Config::new(path);
+        if self.ignore_link {
+            cfg = cfg.with_ignore_link();
+        }
+        if self.ignore_empty {
+            cfg = cfg.with_ignore_empty();
+        }
+        cfg
+    }
+
     pub fn with_ignore_empty(mut self) -> Config {
         self.ignore_empty = true;
         self
@@ -40,7 +52,7 @@ impl Config  {
         self.ignore_link
     }
 
-    pub fn ignore_empty(&self) -> bool {
+    pub fn ignore_emptys(&self) -> bool {
         self.ignore_empty
     }
 }
